@@ -1,93 +1,31 @@
-import type { OnConnect } from "reactflow";
-import type { Node, NodeTypes } from "reactflow";
-
-import {
-  Background,
-  Controls,
-  ControlButton,
-  MiniMap,
-  ReactFlow,
-  addEdge,
-  applyEdgeChanges,
-  applyNodeChanges,
-  useNodesState,
-  useEdgesState,
-  Handle,
-  Position,
-} from "reactflow";
-import { initialEdges, edgeTypes } from "./edges";
-import { FaceIcon, ImageIcon, SunIcon } from "@radix-ui/react-icons";
-import { PositionLoggerNode } from "./nodes/PositionLoggerNode";
+import { Background, Controls, MiniMap, ReactFlow, addEdge, applyEdgeChanges, applyNodeChanges } from "reactflow";
+import { initialEdges, edgeTypes, satisfies } from "./edges";
 import { useCallback, useEffect, useState } from "react";
+import { OpenAI } from "@langchain/openai";
+import { ConversationChain } from "langchain/chains";
+import ResponseNode from "./nodes/ResponseNode";
+import PromptNode from "./nodes/ResponseNode";
+import { nodeTypes, initialNodes } from "./nodes";
+
 import "reactflow/dist/style.css";
-import "./css/text-updater-node.css";
+
+const openAIApiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
 const rfStyle = {
   backgroundColor: "#000000",
 };
 
-const handleStyle = { left: 10 };
-const initialNodes = [{ id: "node-1", type: "textUpdater", position: { x: 0, y: 0 }, data: { value: 123 } }];
+// const openai = new OpenAI({
+//   openAIApiKey: openAIApiKey,
+//   temperature: 0.9,
+//   model: "gpt-3.5-turbo",
+// });
 
-const nodeTypes = { textUpdater: PromptNode };
-
-export const createNode = () => {
-  return {
-    id: `node-${Math.random().toString(36).substr(2, 9)}`,
-    type: "text-updater",
-    position: { x: 0, y: 0 },
-    data: { label: "New Node" },
-  } satisfies Node;
-};
-
-function PromptNode({ data, isConnectable }) {
-  const [prompt, setPrompt] = useState("");
-
-  const divStyle = {
-    position: "relative",
-  };
-
-  const buttonStyle = {
-    position: "absolute",
-    right: 0,
-  };
-
-  const onChange = useCallback((evt) => {
-    console.log(evt.target.value);
-    setPrompt(evt.target.value);
-  }, []);
-
-  const onClick = useCallback(
-    (evt) => {
-      console.log("clicked", prompt);
-    },
-    [prompt]
-  );
-
-  return (
-    <div className="text-updater-node">
-      <div>
-        <label htmlFor="text">Prompt:</label>
-        <input id="text" name="text" onChange={onChange} className="nodrag" />
-      </div>
-      <div style={divStyle}>
-        <button style={buttonStyle} onClick={onClick}>
-          query
-        </button>
-      </div>
-      <Handle type="source" position={Position.Bottom} id="b" isConnectable={isConnectable} />
-    </div>
-  );
-}
+// const chain = new ConversationChain({ llm: openai });
 
 export default function App() {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState([]);
-
-  const addNewNode = () => {
-    const newNode = createNode();
-    setNodes([...nodes, newNode]);
-  };
 
   const onNodesChange = useCallback((changes) => setNodes((nds) => applyNodeChanges(changes, nds)), [setNodes]);
   const onEdgesChange = useCallback((changes) => setEdges((eds) => applyEdgeChanges(changes, eds)), [setEdges]);
@@ -107,11 +45,7 @@ export default function App() {
     >
       <Background />
       <MiniMap />
-      <Controls position="bottom-left">
-        <ControlButton onClick={addNewNode}>
-          <FaceIcon />
-        </ControlButton>
-      </Controls>
+      <Controls position="bottom-left"></Controls>
     </ReactFlow>
   );
 }

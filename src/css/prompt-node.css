@@ -1,4 +1,4 @@
-.text-updater-node {
+.prompt-node {
   height: 70px;
   border: 1px solid #eee;
   padding: 5px;
@@ -6,7 +6,7 @@
   background: white;
 }
 
-.text-updater-node label {
+.prompt-node label {
   display: block;
   color: #777;
   font-size: 12px;
