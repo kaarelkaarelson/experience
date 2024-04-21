@@ -1,5 +1,4 @@
 .prompt-node {
-  height: 70px;
   border: 1px solid #eee;
   padding: 5px;
   border-radius: 5px;
@@ -8,6 +7,12 @@
 
 .prompt-node label {
   display: block;
-  color: #777;
+  color: #00000;
   font-size: 12px;
+}
+
+
+
+.prompt-node button {
+  right: 0;
 }

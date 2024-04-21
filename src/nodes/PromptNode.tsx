@@ -1,59 +1,65 @@
-import { useCallback } from "react";
+import { Context, useCallback } from "react";
 import type { NodeProps } from "reactflow";
 import { Handle, Position } from "reactflow";
 import { useState } from "react";
+import { Node } from "reactflow";
 
 import "../css/prompt-node.css";
+import { getCoursePlan } from "../agents";
+import ResponseNode from "./ResponseNode";
 
-export type PromptNodeData = {};
+export type PromptNodeData = {
+  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+};
+
+export type UserContext = {
+  topic: string;
+  background: string;
+  goal: string;
+};
 
 export default function PromptNode({ data, isConnectable }: NodeProps<PromptNodeData>) {
-  const [prompt, setPrompt] = useState("");
+  const [topic, setTopic] = useState("");
+  const [background, setBackground] = useState("");
+  const [goal, setGoal] = useState("");
+  const [stats, setStats] = useState({});
 
-  const divStyle = {
-    position: "relative",
-  };
+  const onClick = useCallback(async (evt) => {
+    const plan = await getCoursePlan(stats as UserContext);
+    const response = plan?.response as string;
 
-  const buttonStyle = {
-    position: "absolute",
-    right: 0,
-  };
+    console.log(plan);
+    const newNode = ResponseNode({ response });
 
-  const onChange = useCallback((evt) => {
-    console.log(evt.target.value);
-    setPrompt(evt.target.value);
+    // data.setNodes((prevNodes) => [...prevNodes, newNode] as Node[]);
   }, []);
 
-  const onClick = useCallback(
-    (evt) => {
-      queryPrompt(prompt);
-    },
-    [prompt]
-  );
+  const onTopicChange = useCallback((evt) => {
+    setTopic(evt.target.value);
+    setStats((prevStats) => ({ ...prevStats, topic: evt.target.value }));
+  }, []);
 
-  async function queryPrompt(prompt) {
-    try {
-      // const response = await chain.call({ input: "what's 2+2, give me only the answer" });
-      // console.log(response.response);
-      //const newNode = ResponseNode({}, {});
-      // setNodes([...nodes, newNode]);
-      console.log(prompt);
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  }
+  const onBackgroundChange = useCallback((evt) => {
+    setBackground(evt.target.value);
+    setStats((prevStats) => ({ ...prevStats, background: evt.target.value }));
+  }, []);
+
+  const onGoalChange = useCallback((evt) => {
+    setGoal(evt.target.value);
+    setStats((prevStats) => ({ ...prevStats, goal: evt.target.value }));
+  }, []);
 
   return (
     <div className="prompt-node">
       <div>
-        <label htmlFor="text">Prompt:</label>
-        <input id="text" name="text" onChange={onChange} className="nodrag" />
+        <label htmlFor="topic">Topic you're interested in:</label>
+        <input id="topic" name="text" onChange={onTopicChange} className="nodrag" placeholder="Topic" />
+        <label htmlFor="background">Describe your background:</label>
+        <input id="background" name="backgroudn" onChange={onBackgroundChange} className="nodrag" placeholder="Background" />
+        <label htmlFor="goal">Learning goal:</label>
+        <input id="goal" name="goal" onChange={onGoalChange} className="nodrag" placeholder="Goal" />
       </div>
-      <div style={divStyle}>
-        <button style={buttonStyle} onClick={onClick}>
-          query
-        </button>
-      </div>
+      <button onClick={onClick}>experience</button>
       <Handle type="source" position={Position.Bottom} id="b" isConnectable={isConnectable} />
     </div>
   );
