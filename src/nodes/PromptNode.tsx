@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Node } from "reactflow";
 
 import "../css/prompt-node.css";
-import { getCoursePlan } from "../agents";
+import { getCurriculum } from "../agents";
 import ResponseNode from "./ResponseNode";
 
 export type PromptNodeData = {
@@ -25,7 +25,7 @@ export default function PromptNode({ data, isConnectable }: NodeProps<PromptNode
   const [stats, setStats] = useState({});
 
   const onClick = useCallback(async (evt) => {
-    const plan = await getCoursePlan(stats as UserContext);
+    const plan = await getCurriculum(stats as UserContext);
     const response = plan?.response as string;
 
     console.log(plan);

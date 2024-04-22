@@ -4,6 +4,7 @@ import { createToolCallingAgent, AgentExecutor } from "langchain/agents";
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
 import * as hub from "langchain/hub";
 import { StructuredToolInterface } from "@langchain/core/tools";
+import { ChainValues } from "@langchain/core/utils/types";
 
 import { PromptTemplate, ChatPromptTemplate } from "@langchain/core/prompts";
 // import { UserContext } from "../nodes/PromptNode";
@@ -23,6 +24,10 @@ type UserContext = {
   goal: string;
 };
 
+type getExercisesProps = {
+  curriculum: string;
+};
+
 const llm = new ChatOpenAI({
   openAIApiKey: openAIApiKey,
   temperature: 0.9,
@@ -36,35 +41,59 @@ const prompt: ChatPromptTemplate<any> = await hub.pull("hwchase17/openai-functio
 const agent = createToolCallingAgent({ llm, tools, prompt });
 const agent_executor = new AgentExecutor({ agent: agent, tools: tools, verbose: true });
 
-// const chain = new ConversationChain({ llm: llm });
-
-const coursePromptTemplate = PromptTemplate.fromTemplate(`
+const curriculumPrompt = PromptTemplate.fromTemplate(`
     Generate a personal learning course about {topic}. \n \
     Pick out 3 exercises \n \
     Make it personalized by considering users's background: {background} \n \
     Adjust it to follow user's learning goal: {goal} \n`);
 
-export async function getCoursePlan({ topic, background, goal }: UserContext) {
+const exercisesPrompt = PromptTemplate.fromTemplate(`
+    Create 3 concrete interactive exercises and return them as html code \n \
+    Make sure each of them adheres to the curriculum: \n
+    {curriculum}
+    `);
+
+export async function getCurriculum({ topic, background, goal }: UserContext) {
   console.log(topic, background, goal);
 
-  const formattedPrompt = await coursePromptTemplate.format({ topic: topic, background: background, goal: goal });
+  const formattedPrompt = await curriculumPrompt.format({ topic: topic, background: background, goal: goal });
 
   console.log(formattedPrompt);
 
   try {
     const response = await agent_executor.invoke({ input: formattedPrompt });
 
-    console.log(response.response);
-    return response;
+    return response.output as string;
+  } catch (error) {
+    console.error("Error:", error);
+    return "Error";
+  }
+}
+
+export async function getExercises({ curriculum }: getExercisesProps) {
+  const formattedPrompt = await exercisesPrompt.format({ curriculum });
+
+  console.log(formattedPrompt);
+
+  try {
+    const response = await agent_executor.invoke({ input: formattedPrompt });
+
+    console.log("This is the RESPONSE: " + response);
+
+    return response.output;
   } catch (error) {
     console.error("Error:", error);
   }
 }
 
-const plan = await getCoursePlan({
+const curriculum = await getCurriculum({
   topic: "Exponential growth",
   background: "CS undergrad",
   goal: "Learn more how this concept relates to economics",
 });
 
-console.log(plan);
+const exercises = await getExercises({
+  curriculum: curriculum,
+});
+
+console.log(exercises);
